@@ -1,10 +1,82 @@
 pipeline {
     agent any
+
+    parameters {
+        choice(
+            name: 'ENV',
+            choices: ['dev', 'stg', 'prod'],
+            description: 'Select environment'
+        )
+
+        choice(
+            name: 'ACTION',
+            choices: ['plan', 'apply', 'destroy'],
+            description: 'Select Terraform action'
+        )
+    }
+
     stages {
-        stage('Test') {
+
+        stage('Terraform Init') {
             steps {
-                echo 'Hello Jenkins'
+                sh 'terraform init'
             }
+        }
+
+        stage('Select Workspace') {
+            steps {
+                sh '''
+                terraform workspace select ${ENV} || terraform workspace new ${ENV}
+                '''
+            }
+        }
+
+        stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'plan' || params.ACTION == 'apply' }
+            }
+            steps {
+                sh 'terraform plan'
+            }
+        }
+
+        stage('Approval') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                input "Do you want to apply Terraform on ${ENV}?"
+            }
+        }
+
+        stage('Terraform Apply') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
+                sh 'terraform apply -auto-approve'
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                sh 'terraform destroy -auto-approve'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'This always runs'
+        }
+        success {
+            echo 'Pipeline Success'
+        }
+        failure {
+            echo 'Pipeline Failed'
         }
     }
 }
