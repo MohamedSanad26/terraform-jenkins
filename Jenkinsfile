@@ -36,7 +36,9 @@ pipeline {
                 expression { params.ACTION == 'plan' || params.ACTION == 'apply' }
             }
             steps {
-                sh 'terraform plan'
+                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh 'terraform plan'
+                }
             }
         }
 
@@ -54,7 +56,9 @@ pipeline {
                 expression { params.ACTION == 'apply' }
             }
             steps {
-                sh 'terraform apply -auto-approve'
+                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh 'terraform apply -auto-approve'
+                }
             }
         }
 
@@ -63,7 +67,9 @@ pipeline {
                 expression { params.ACTION == 'destroy' }
             }
             steps {
-                sh 'terraform destroy -auto-approve'
+                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh 'terraform destroy -auto-approve'
+                }
             }
         }
     }
